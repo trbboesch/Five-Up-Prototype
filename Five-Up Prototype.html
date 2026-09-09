@@ -1,0 +1,2115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Five-Up Table Mockup</title>
+<style>
+  :root {
+    --felt-1: #1e4d3a;
+    --felt-2: #163c2c;
+    --wood-light: #e8d9b8;
+    --wood-mid: #d9c49a;
+    --wood-dark: #b89968;
+    --ivory-1: #fdf8ee;
+    --ivory-2: #f2e8d3;
+    --pip: #2b2b2b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0b0b0b;
+  }
+  .stage-label {
+    color: #999;
+    font-size: 13px;
+    margin: 0 0 8px 4px;
+    letter-spacing: 0.02em;
+  }
+  .difficulty-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    margin: 0 0 12px 4px;
+    font-size: 13px;
+    color: #ccc;
+  }
+  .difficulty-row select {
+    background: #222;
+    color: #f0e6c8;
+    border: 1px solid #555;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 13px;
+  }
+  .table {
+    position: relative;
+    margin: 0 auto 28px;
+    border-radius: 22px;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.05), transparent 60%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 2px, transparent 2px, transparent 4px),
+      linear-gradient(160deg, var(--felt-1), var(--felt-2));
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.55), 0 8px 24px rgba(0,0,0,0.5);
+    overflow: hidden;
+    padding: 16px;
+  }
+
+  /* Scoreboard */
+  .scoreboard-simple {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, var(--wood-light), var(--wood-mid) 60%, var(--wood-dark));
+    color: #2a1d0e;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 6px 16px;
+    border-radius: 14px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+    white-space: nowrap;
+    z-index: 15;
+  }
+
+  /* Domino line of play */
+  .play-area {
+    position: absolute;
+    top: 184px;
+    left: 46px;
+    right: 46px;
+    bottom: 125px;
+    overflow: auto;
+  }
+  .board-inner {
+    position: absolute;
+  }
+  .domino {
+    background: linear-gradient(160deg, var(--ivory-1), var(--ivory-2));
+    border-radius: 5px;
+    box-shadow:
+      0 3px 6px rgba(0,0,0,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.7),
+      inset 0 -2px 3px rgba(0,0,0,0.08);
+    display: flex;
+    position: relative;
+  }
+  .domino::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 5px;
+    background: radial-gradient(ellipse at 30% 15%, rgba(255,255,255,0.5), transparent 50%);
+  }
+  .domino-h {
+    width: 64px;
+    height: 36px;
+    flex-direction: row;
+  }
+  .half {
+    flex: 1;
+    display: grid;
+    place-items: center;
+    position: relative;
+  }
+  .half:first-child { border-right: 1.5px solid #1a1a1a; }
+  .pips {
+    position: relative;
+    width: 26px;
+    height: 26px;
+  }
+  .pip {
+    position: absolute;
+    width: 5.5px;
+    height: 5.5px;
+    border-radius: 50%;
+    background: #1c1c1c;
+    box-shadow: inset 0 0.5px 0.5px rgba(255,255,255,0.15);
+    margin: -2.75px 0 0 -2.75px;
+  }
+
+  .domino-v {
+    width: 36px;
+    height: 64px;
+    flex-direction: column;
+    margin-left: -6px;
+  }
+  .domino-v .half:first-child { border-right: none; border-bottom: 1.5px solid #1a1a1a; }
+
+  /* Hand of tiles */
+  .hand {
+    position: absolute;
+    bottom: 11px;
+    left: 0;
+    right: 0;
+    height: 62px;
+    display: flex;
+    justify-content: center;
+    gap: -8px;
+    transform-origin: bottom center;
+  }
+  .hand .domino-v { margin-left: 6px; box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.7); }
+  .hand .domino-v:first-child { margin-left: 0; }
+
+  /* Opponent face-down tiles */
+  .opp-back {
+    background: linear-gradient(160deg, var(--ivory-1), var(--ivory-2));
+    border-radius: 5px;
+    box-shadow:
+      0 3px 6px rgba(0,0,0,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.7),
+      inset 0 -2px 3px rgba(0,0,0,0.08);
+    position: relative;
+  }
+  .opp-back::before {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 2px;
+  }
+  .opp-top, .opp-bottom {
+    position: absolute;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+  }
+  .opp-top { top: 81px; transform-origin: top center; }
+  .opp-bottom { bottom: 63px; transform-origin: bottom center; }
+  .opp-top .opp-back, .opp-bottom .opp-back { width: 40px; height: 26px; }
+
+  .opp-left, .opp-right {
+    position: absolute;
+    top: 113px;
+    bottom: 98px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+  .opp-left { left: 6px; transform-origin: left center; }
+  .opp-right { right: 6px; transform-origin: right center; }
+  .opp-left .opp-back, .opp-right .opp-back { width: 26px; height: 40px; }
+
+  .seat-label {
+    position: absolute;
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+    background: rgba(0,0,0,0.3);
+    padding: 2px 7px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+  .seat-top { top: 77px; left: 50%; transform: translate(-50%,-100%); }
+  .seat-bottom { bottom: 59px; left: 50%; transform: translate(-50%,100%); }
+  .seat-left { top: 50%; left: 34px; transform: translateY(-50%) rotate(90deg); }
+  .seat-right { top: 50%; right: 34px; transform: translateY(-50%) rotate(-90deg); }
+
+  .boneyard {
+    position: absolute;
+    top: 195px;
+    right: 40px;
+    width: 46px;
+    height: 46px;
+  }
+  .boneyard .opp-back {
+    position: absolute;
+    width: 20px;
+    height: 30px;
+  }
+  .bone-count {
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 10px;
+    background: #1a1a1a;
+    color: #fdf8ee;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 0 2px var(--felt-1);
+    z-index: 2;
+  }
+  .bone-label {
+    position: absolute;
+    top: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+  }
+
+  /* Interactive additions */
+  .hand .domino-v {
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .hand .domino-v:hover {
+    transform: translateY(-6px);
+  }
+  .hand .domino-v.selected {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.7), 0 0 0 3px #56ccf2;
+    transform: translateY(-6px);
+  }
+  .hand .domino-v.shake {
+    animation: shake-tile 0.4s ease;
+  }
+  @keyframes shake-tile {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+  .seat-label.active-seat {
+    background: rgba(242,201,76,0.85);
+    color: #2a2000;
+    font-weight: 600;
+  }
+  .status-bar {
+    position: absolute;
+    top: 50px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 11px;
+    color: rgba(255,255,255,0.75);
+    z-index: 3;
+  }
+  .action-row {
+    position: absolute;
+    bottom: 85px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px;
+    max-width: 90%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    z-index: 3;
+  }
+  .game-btn {
+    background: linear-gradient(180deg, #f6e6a8, #d8b855);
+    color: #4a3c14;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    cursor: pointer;
+  }
+  .game-btn:active { transform: translateY(1px); }
+  .overlay {
+    position: absolute;
+    top: 30px;
+    left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.72);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 10;
+    text-align: center;
+    padding: 24px;
+  }
+  .overlay h2 {
+    color: #fdf8ee;
+    font-size: 18px;
+    margin: 0;
+  }
+  .overlay p {
+    color: rgba(255,255,255,0.8);
+    font-size: 13px;
+    margin: 0;
+    max-width: 280px;
+  }
+  .hidden { display: none !important; }
+
+  .score-popup {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.6);
+    background: linear-gradient(180deg, #ffe58a, #f2b705);
+    color: #3a2a00;
+    font-size: 22px;
+    font-weight: 800;
+    padding: 10px 22px;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5), 0 0 0 3px rgba(255,255,255,0.4);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+  }
+  .score-popup.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+</style>
+</head>
+<body>
+
+<body>
+
+<p class="stage-label">Five-Up — playable prototype</p>
+<div class="difficulty-row">
+  <label for="partner-difficulty-select">Partner:</label>
+  <select id="partner-difficulty-select">
+    <option value="beginner">Beginner</option>
+    <option value="intermediate">Intermediate</option>
+    <option value="advanced" selected>Advanced</option>
+    <option value="expert">Expert</option>
+  </select>
+  <label for="opponent-difficulty-select">Opponents:</label>
+  <select id="opponent-difficulty-select">
+    <option value="beginner">Beginner</option>
+    <option value="intermediate">Intermediate</option>
+    <option value="advanced" selected>Advanced</option>
+    <option value="expert">Expert</option>
+  </select>
+  <label for="wager-rate-select">Wager:</label>
+  <select id="wager-rate-select">
+    <option value="0,0">No wager</option>
+    <option value="1,0.10" selected>$1 + $0.10/pt</option>
+    <option value="2,0.20">$2 + $0.20/pt</option>
+  </select>
+</div>
+<div class="table" id="table">
+
+  <div class="scoreboard-simple" id="scoreboard-simple">Us 0 &middot; Them 0</div>
+
+  <div class="status-bar" id="status-bar">Dealing...</div>
+  <div class="score-popup" id="score-popup"></div>
+
+  <div class="seat-label seat-top" id="seat-label-2">partner</div>
+  <div class="opp-top" id="seat-tiles-2"></div>
+
+  <div class="seat-label seat-left" id="seat-label-3">opponent</div>
+  <div class="opp-left" id="seat-tiles-3"></div>
+
+  <div class="seat-label seat-right" id="seat-label-1">opponent</div>
+  <div class="opp-right" id="seat-tiles-1"></div>
+
+  <div class="boneyard" id="boneyard">
+    <div class="bone-label">boneyard</div>
+    <div class="bone-count" id="bone-count">14</div>
+  </div>
+
+  <div class="play-area" id="play-area"></div>
+
+  <div class="action-row" id="action-row"></div>
+
+  <div class="hand" id="hand"></div>
+
+  <div class="overlay hidden" id="overlay">
+    <h2 id="overlay-title">Hand over</h2>
+    <p id="overlay-body"></p>
+    <button class="game-btn" id="overlay-btn">Continue</button>
+  </div>
+
+</div>
+
+<script>
+// domino.js — tile primitives shared by both game variants.
+// A tile is a plain object { a, b } with 0 <= a,b <= 6. Order of a/b is not
+// meaningful except where noted (e.g. matching against an open end).
+
+function makeTile(a, b) {
+  return { a, b };
+}
+
+function isDouble(tile) {
+  return tile.a === tile.b;
+}
+
+function pipSum(tile) {
+  return tile.a + tile.b;
+}
+
+function hasValue(tile, value) {
+  return tile.a === value || tile.b === value;
+}
+
+// The value at the "other" end of a tile once one end is used to attach it.
+// For a double this is just its own number (both ends are identical).
+function otherValue(tile, usedValue) {
+  return tile.a === usedValue ? tile.b : tile.a;
+}
+
+function createFullSet() {
+  const set = [];
+  for (let i = 0; i <= 6; i++) {
+    for (let j = i; j <= 6; j++) {
+      set.push(makeTile(i, j));
+    }
+  }
+  return set; // 28 tiles
+}
+
+function shuffle(array, rng = Math.random) {
+  const arr = array.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Ranking used for the once-per-game "pull" that determines the first
+// setter (and, in Five-Up, partnerships). Higher pip sum wins; if two
+// pulled tiles share the same pip sum, the double outranks the non-double.
+function comparePulls(t1, t2) {
+  const s1 = pipSum(t1);
+  const s2 = pipSum(t2);
+  if (s1 !== s2) return s1 - s2;
+  const d1 = isDouble(t1) ? 1 : 0;
+  const d2 = isDouble(t2) ? 1 : 0;
+  return d1 - d2;
+}
+
+function tileLabel(tile) {
+  return `${tile.a}-${tile.b}`;
+}
+
+function roundToNearest5(n) {
+  return Math.round(n / 5) * 5;
+}
+
+
+
+// board.js — the line of play.
+//
+// Played tiles form a tree. Each node exposes a small set of "slots" — the
+// physical connection points where another tile could attach:
+//   - A non-double has 2 slots (its two ends), or 1 slot if it already has
+//     a parent (one end is used connecting to the parent).
+//   - A double (spinner) has slots for both of its long-axis ends plus two
+//     side slots. The side slots start LOCKED. Per the house rule, the
+//     first tile played onto a double must go on an end, not a side; only
+//     once an end slot has been filled do the two side slots unlock.
+//
+// The engine never assigns screen coordinates or orientation — that is a
+// rendering concern. It only tracks legality and scoring.
+
+
+let _idCounter = 1;
+function nextId() {
+  return _idCounter++;
+}
+
+function makeNode(tile, viaValue /* null if this is the opening tile */) {
+  const id = nextId();
+  const dbl = isDouble(tile);
+  let slots;
+
+  if (dbl) {
+    const n = tile.a;
+    if (viaValue === null) {
+      // Opening double: both long-axis ends are free first (continuing
+      // the line straight through, as a real double is laid crosswise
+      // and the next tile passes straight through it); sides locked
+      // until an end is played on.
+      slots = [
+        { key: 'end1', value: n, filledBy: null, locked: false },
+        { key: 'end2', value: n, filledBy: null, locked: false },
+        { key: 'sideA', value: n, filledBy: null, locked: true },
+        { key: 'sideB', value: n, filledBy: null, locked: true },
+      ];
+    } else {
+      // Attached double: the free end (continuing straight through in
+      // the same direction the line was already going) is free first;
+      // sides locked until that end is played on.
+      slots = [
+        { key: 'freeEnd', value: n, filledBy: null, locked: false },
+        { key: 'sideA', value: n, filledBy: null, locked: true },
+        { key: 'sideB', value: n, filledBy: null, locked: true },
+      ];
+    }
+  } else if (viaValue === null) {
+    // Opening non-double: both ends free.
+    slots = [
+      { key: 'end1', value: tile.a, filledBy: null, locked: false },
+      { key: 'end2', value: tile.b, filledBy: null, locked: false },
+    ];
+  } else {
+    // Attached non-double: one end used to attach, the other is open.
+    slots = [
+      { key: 'openEnd', value: otherValue(tile, viaValue), filledBy: null, locked: false },
+    ];
+  }
+
+  return { id, tile, isDouble: dbl, slots };
+}
+
+// Unlock a double's side slots once ALL of its end-type slots are filled
+// -- both end1 and end2 for a root double, or the single freeEnd for an
+// attached double. A root double has two separate, independent
+// directions; filling only one leaves the other a completely untouched
+// connection point, so the double isn't "played through" yet and its
+// sides should stay locked until both directions are used.
+function updateDoubleLocks(node) {
+  if (!node.isDouble) return;
+  const endSlots = node.slots.filter(
+    (s) => s.key === 'end1' || s.key === 'end2' || s.key === 'freeEnd'
+  );
+  const allEndsFilled = endSlots.every((s) => s.filledBy !== null);
+  if (allEndsFilled) {
+    node.slots.forEach((s) => {
+      if ((s.key === 'sideA' || s.key === 'sideB') && s.locked) s.locked = false;
+    });
+  }
+}
+
+function createEmptyBoard() {
+  return { rootId: null, nodes: {} };
+}
+
+function isEmpty(board) {
+  return board.rootId === null;
+}
+
+// All currently-open (unfilled, unlocked) connection points on the board.
+function getOpenSlots(board) {
+  const open = [];
+  for (const nodeId of Object.keys(board.nodes)) {
+    const node = board.nodes[nodeId];
+    for (const slot of node.slots) {
+      if (slot.filledBy === null && !slot.locked) {
+        open.push({ nodeId: node.id, slotKey: slot.key, value: slot.value });
+      }
+    }
+  }
+  return open;
+}
+
+// A double's single remaining through-connection always shows its full
+// double face (both halves are identical), so it counts as 2x its number,
+// not once -- confirmed directly against the source material's own worked
+// examples (e.g. "the 4-4 and 3 add up to a count of 11" only works if the
+// 4-4's one open end contributes 8, not 4). A double's perpendicular side
+// slots, even once unlocked, contribute nothing to the score until a tile
+// is actually played there -- they remain legal targets in the meantime,
+// just not counted toward the open-end total.
+function computeOpenSum(board) {
+  let sum = 0;
+  for (const nodeId of Object.keys(board.nodes)) {
+    const node = board.nodes[nodeId];
+    if (node.isDouble) {
+      const n = node.tile.a; // a === b for a double
+      const anyThroughOpen = node.slots.some(
+        (s) => (s.key === 'end1' || s.key === 'end2' || s.key === 'freeEnd') && s.filledBy === null
+      );
+      if (anyThroughOpen) sum += n * 2;
+    } else {
+      for (const slot of node.slots) {
+        if (slot.filledBy === null) sum += slot.value;
+      }
+    }
+  }
+  return sum;
+}
+
+function isMultipleOf5(n) {
+  return n % 5 === 0;
+}
+
+// Can this specific tile be played anywhere on the current board?
+function tileHasLegalPlacement(tile, board) {
+  if (isEmpty(board)) return true; // opening move: any tile is legal
+  const open = getOpenSlots(board);
+  return open.some((s) => s.value === tile.a || s.value === tile.b);
+}
+
+// Does the hand contain at least one playable tile?
+function handCanPlay(hand, board) {
+  return hand.some((t) => tileHasLegalPlacement(t, board));
+}
+
+// All legal placements for a given tile: one entry per matching open slot.
+// (A tile could theoretically match more than one open slot on the board;
+// the caller/UI picks which one to use.)
+function getLegalPlacements(tile, board) {
+  if (isEmpty(board)) return [{ opening: true }];
+  const placements = [];
+  for (const slot of getOpenSlots(board)) {
+    if (slot.value === tile.a || slot.value === tile.b) {
+      placements.push({ nodeId: slot.nodeId, slotKey: slot.slotKey, value: slot.value });
+    }
+  }
+  return placements;
+}
+
+// Play `tile` onto `board` at `placement` (as returned by getLegalPlacements).
+// Returns { board, scoreThisPlay, openSum }. Mutates the board in place for
+// simplicity — callers that need history should snapshot before calling.
+function playTile(board, tile, placement) {
+  if (placement.opening) {
+    const node = makeNode(tile, null);
+    board.nodes[node.id] = node;
+    board.rootId = node.id;
+  } else {
+    const parent = board.nodes[placement.nodeId];
+    const slot = parent.slots.find((s) => s.key === placement.slotKey);
+    const node = makeNode(tile, placement.value);
+    board.nodes[node.id] = node;
+    slot.filledBy = node.id;
+    updateDoubleLocks(parent);
+  }
+  const openSum = computeOpenSum(board);
+  // Real Five-Up scoring is in units of 5: an open-end total of 10 scores
+  // 2 points, 15 scores 3, and so on -- not the raw total itself.
+  const scoreThisPlay = isMultipleOf5(openSum) ? openSum / 5 : 0;
+  return { board, scoreThisPlay, openSum };
+}
+
+
+
+// boneyard.js — drawing when a player can't play.
+//
+// Five-Up: draw until you get a playable tile, or until only 1 tile is
+//          left in the boneyard — that final tile must be left undrawn.
+// Seven-Toed Pete: same, but the floor is 2 tiles instead of 1.
+
+
+function drawFloorFor(variant) {
+  return variant === 'seven-toed-pete' ? 2 : 1;
+}
+
+// Attempts to draw tiles into `hand` from `boneyard` until either a
+// playable tile is drawn or the variant's floor is reached. Mutates both
+// arrays. Returns { drawnTiles, mustPass }.
+function drawUntilPlayableOrFloor(boneyard, hand, board, variant) {
+  const floor = drawFloorFor(variant);
+  const drawnTiles = [];
+
+  if (handCanPlay(hand, board)) {
+    return { drawnTiles, mustPass: false };
+  }
+
+  while (boneyard.length > floor) {
+    const tile = boneyard.pop();
+    hand.push(tile);
+    drawnTiles.push(tile);
+    if (tileHasLegalPlacement(tile, board)) {
+      return { drawnTiles, mustPass: false };
+    }
+  }
+
+  return { drawnTiles, mustPass: !handCanPlay(hand, board) };
+}
+
+
+
+// scoreboard.js — the two-peg leapfrog track.
+//
+// The first score moves a single peg forward from the start. Every score
+// after that moves the trailing peg past the leading peg by the number of
+// points just scored. At any moment, the lead peg's position is the side's
+// current total; the gap between the two pegs is the most recent score.
+
+function createTrack() {
+  return { pegA: 0, pegB: 0, started: false };
+}
+
+function addScore(track, points) {
+  if (points <= 0) return track;
+  if (!track.started) {
+    track.pegA = points;
+    track.started = true;
+    return track;
+  }
+  if (track.pegA <= track.pegB) {
+    track.pegA = track.pegB + points;
+  } else {
+    track.pegB = track.pegA + points;
+  }
+  return track;
+}
+
+function currentScore(track) {
+  return Math.max(track.pegA, track.pegB);
+}
+
+function lastGap(track) {
+  return Math.abs(track.pegA - track.pegB);
+}
+
+function hasCompletedCircuit(track, target = 60) {
+  return currentScore(track) >= target;
+}
+
+
+
+// ai.js — Stage 2 bot logic (Five-Up AI Strategy Notes, Sections 3, 4 & 13).
+//
+// Stage 1 (priorities 1-5: protect position, score, tighten/force, shed
+// doubles, reduce hand weight) is unchanged below. Stage 2 adds Section 4's
+// signaling layer on top: the setter opens from their strongest suit, every
+// subsequent chosen (non-forced) play is read as a signal of the number left
+// exposed, partners try to keep that number available rather than covering
+// it, and opponents' signaled numbers are mildly worth denying. Suit-control
+// tracking (Section 7) and scoreboard awareness (Section 9) remain deferred
+// to Stages 3-4 per the staged plan in Section 13.
+//
+// Relies on functions already defined earlier in the bundle: playTile,
+// getOpenSlots, isDouble, pipSum, handCanPlay.
+
+// Beginner tier: no strategy at all, just a uniformly random legal move.
+// Used for both the opening play and every subsequent turn at this level.
+function chooseRandomMove(legalByTile, rng) {
+  rng = rng || Math.random;
+  var candidates = [];
+  legalByTile.forEach(function (placements, tileIndex) {
+    placements.forEach(function (placement) {
+      candidates.push({ tileIndex: tileIndex, placement: placement });
+    });
+  });
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(rng() * candidates.length)];
+}
+
+// Stage 3 (Strategy Notes Section 7): suit control and lead-back tracking.
+// All of this works from public information only (the board state, plus
+// the bot's own hand) -- no knowledge of what specific tiles opponents
+// hold, only how many of a suit's tiles are still unaccounted for.
+
+// How many tiles touching value v (of all 7: the double plus 6 non-doubles)
+// are already played on the board. A double is counted once.
+function countPlayedOfSuit(board, v) {
+  var count = 0;
+  Object.keys(board.nodes).forEach(function (id) {
+    var t = board.nodes[id].tile;
+    if (t.a === v) count++;
+    else if (t.b === v) count++;
+  });
+  return count;
+}
+
+// How many of value v's SIX non-double tiles are already played --
+// "remaining" is 6 minus this, matching the strategy notes' phrasing.
+function countPlayedNonDoubleOfSuit(board, v) {
+  var count = 0;
+  Object.keys(board.nodes).forEach(function (id) {
+    var t = board.nodes[id].tile;
+    if (t.a === t.b) return;
+    if (t.a === v || t.b === v) count++;
+  });
+  return count;
+}
+
+// A suit is closed once all 6 non-doubles AND the double are played --
+// after that, nobody can ever show that number again.
+function suitClosed(board, v) {
+  var doublePlayed = Object.keys(board.nodes).some(function (id) {
+    var t = board.nodes[id].tile;
+    return t.a === v && t.b === v;
+  });
+  return countPlayedNonDoubleOfSuit(board, v) === 6 && doublePlayed;
+}
+
+// How many of value v's 7 total tiles are unaccounted for by this hand or
+// the board -- i.e. potentially in an opponent's hand or the boneyard.
+// Higher means riskier to leave that number open; lower (especially 0)
+// means this suit is well "established" and safer to expose.
+function suitTilesUnseen(board, hand, v) {
+  var played = countPlayedOfSuit(board, v);
+  var mine = 0;
+  hand.forEach(function (t) { if (t.a === v || t.b === v) mine++; });
+  return Math.max(0, 7 - played - mine);
+}
+
+// Does this hand hold a tile matching two already-closed suits? Such a
+// tile can never be played again and is pure dead weight if the hand
+// blocks -- a genuine liability worth recognizing.
+function countOrphans(board, hand) {
+  return hand.filter(function (t) {
+    return suitClosed(board, t.a) && suitClosed(board, t.b);
+  }).length;
+}
+
+// Stage 4 (Section 9): scoreboard-aware macro strategy. "Tightening" (fewer
+// open numbers, pushing opponents toward the boneyard) and "opening" (more
+// open numbers, more chances at a big score) are opposite tools -- which
+// one favors a given side depends on whether they're ahead or behind, and
+// that effect should sharpen as either side closes in on the winning score.
+//
+// Returns a signed multiplier: positive means lean toward tightening
+// (protecting a lead), negative means lean toward opening up and hunting
+// for a bigger score (chasing from behind), scaled by both how large the
+// lead is and how close the game is to ending.
+function computeMacroLean(myScore, oppScore, winningScore) {
+  var leadFactor = Math.max(-1, Math.min(1, (myScore - oppScore) / 20));
+  var urgency = Math.max(myScore, oppScore) / winningScore;
+  return leadFactor * urgency;
+}
+
+function cloneBoardForSim(board) {
+  return JSON.parse(JSON.stringify(board));
+}
+
+// How many tiles in a hand touch a given number -- a double counts twice,
+// since holding it is a strong claim on that suit in its own right.
+function suitStrength(hand, value) {
+  var count = 0;
+  hand.forEach(function (t) {
+    if (t.a === value) count++;
+    if (t.b === value) count++;
+  });
+  return count;
+}
+
+// The number the setter holds the most of -- the suit Section 4 says the
+// opening tile should be chosen from. Ties favor the higher number.
+function computeStrongestSuit(hand) {
+  var best = 0, bestCount = -1;
+  for (var v = 0; v <= 6; v++) {
+    var count = suitStrength(hand, v);
+    if (count >= bestCount) { bestCount = count; best = v; }
+  }
+  return best;
+}
+
+// Chooses the opening tile: from the setter's strongest suit, preferring
+// the double of that suit (the clearest possible declaration of strength),
+// otherwise a tile whose other value is also reasonably strong so the
+// setter isn't forced to expose a genuinely weak second number.
+function chooseOpeningMove(hand, rng) {
+  rng = rng || Math.random;
+  var suit = computeStrongestSuit(hand);
+  var candidates = [];
+  hand.forEach(function (tile, tileIndex) {
+    if (tile.a !== suit && tile.b !== suit) return;
+    var other = tile.a === suit ? tile.b : tile.a;
+    var isDbl = tile.a === tile.b;
+    var weight = isDbl ? 1000 : suitStrength(hand, other);
+    candidates.push({ tileIndex: tileIndex, weight: weight });
+  });
+  candidates.sort(function (a, b) { return b.weight - a.weight; });
+  var top = candidates[0].weight;
+  var bestTier = candidates.filter(function (c) { return c.weight === top; });
+  var chosen = bestTier[Math.floor(rng() * bestTier.length)];
+  return { tileIndex: chosen.tileIndex, placement: { opening: true }, signaledValue: suit };
+}
+
+// Scores a single candidate (tileIndex + placement). Higher is better.
+// signals is optional: { partner: number|null, opponents: [number|null, number|null] }
+function evaluateCandidate(hand, tileIndex, placement, board, signals, suitAware, macroLean) {
+  var tile = hand[tileIndex];
+  var cloned = cloneBoardForSim(board);
+  var result = playTile(cloned, tile, placement);
+  var scoreThisPlay = result.scoreThisPlay;
+
+  var remainingHand = hand.slice(0, tileIndex).concat(hand.slice(tileIndex + 1));
+  var wentOut = remainingHand.length === 0;
+
+  var value = 0;
+
+  // Priority 2: score if at all possible -- the dominant factor in nearly
+  // every real situation, per the strategy notes.
+  value += scoreThisPlay * 1000;
+
+  // Going out ends the hand outright in this player's favor.
+  if (wentOut) value += 100000;
+
+  // Priority 4: shed doubles at the first good opportunity.
+  if (isDouble(tile)) value += 20;
+
+  if (scoreThisPlay === 0 && !wentOut) {
+    // Priority 3 (tighten the board) + Priority 5 (reduce hand weight),
+    // blended, since neither requires suit-control tracking to approximate.
+    // The tighten weight is scaled by the macro lean (Stage 4, Section 9):
+    // a bigger lead near the winning score makes fewer open numbers more
+    // valuable (protect it); being significantly behind late can flip this
+    // toward preferring MORE open numbers instead (hunt for a bigger score).
+    var openSlotsAfter = getOpenSlots(cloned).length;
+    var lean = macroLean || 0;
+    var tightenWeight = -3 - lean * 5;
+    value += pipSum(tile) * 2;    // prefer shedding heavier tiles
+    value += openSlotsAfter * tightenWeight;
+  }
+
+  // Priority 1: protect position -- don't self-block if an alternative
+  // avoids it. Modest weight so it acts as a tiebreaker, not an override
+  // of real points, matching "passing up a score should be rare."
+  if (!wentOut) {
+    var canContinue = handCanPlay(remainingHand, cloned);
+    if (canContinue) value += 50;
+  }
+
+  // Stage 2: signaling. Only meaningful for an ordinary (non-double,
+  // non-opening) attachment, where one value is consumed and the other is
+  // newly exposed -- doubles and openings are handled by their own callers.
+  if (signals && !placement.opening && tile.a !== tile.b) {
+    var exposedValue = tile.a === placement.value ? tile.b : tile.a;
+
+    // Helping the partner: leaving their indicated number open is good;
+    // covering an existing slot that showed their number is mildly bad,
+    // matching "never split a partner's indicated number between the two
+    // open ends."
+    if (signals.partner !== null && signals.partner !== undefined) {
+      if (exposedValue === signals.partner) value += 15;
+      if (placement.value === signals.partner) value -= 8;
+    }
+
+    // Cut-off denial: using up a slot that matches a number an opponent
+    // has shown wanting is a small, deliberate win even when an equally
+    // legal alternative existed.
+    if (signals.opponents) {
+      signals.opponents.forEach(function (oppValue) {
+        if (oppValue !== null && oppValue !== undefined && placement.value === oppValue) {
+          value += 10;
+        }
+      });
+    }
+  }
+
+  // Stage 4 (Section 7): suit control and lead-back tracking. Only
+  // meaningful for an ordinary (non-double, non-opening) attachment, same
+  // as the signaling logic above.
+  if (suitAware && !placement.opening && tile.a !== tile.b) {
+    var exposedForSuit = tile.a === placement.value ? tile.b : tile.a;
+
+    // Leaving a number open that's likely still well-supplied among
+    // opponents/boneyard is risky; using up tiles of such a number is a
+    // deliberate denial, same spirit as cut-off denial but based on
+    // tracked suit counts rather than an observed signal.
+    value -= suitTilesUnseen(board, remainingHand, exposedForSuit) * 3;
+    value += suitTilesUnseen(board, remainingHand, placement.value) * 2;
+
+    // Holding a tile that matches two already-closed suits is a real,
+    // if delayed, cost -- it can never be played again.
+    value -= countOrphans(cloned, remainingHand) * 25;
+  }
+
+  // Stage 4 (Section 8): kickers and repeaters. Certain tiles are worth
+  // more than their pip value alone because they can force or extend a
+  // score later -- a play that connects directly to a live spinner
+  // (an open double) or nudges the open-end sum close to a multiple of 5
+  // deserves a bit of extra credit even when it doesn't score outright.
+  if (suitAware && !placement.opening) {
+    var targetNode = board.nodes[placement.nodeId];
+    if (targetNode && targetNode.isDouble) value += 8; // connects to a live spinner
+
+    if (scoreThisPlay === 0 && !wentOut) {
+      var remainder = result.openSum % 5;
+      var distanceToMultiple = Math.min(remainder, 5 - remainder);
+      value += (2 - distanceToMultiple) * 2; // nudges the sum close to a score; nothing if it's not close
+
+      // Don't spend a flexible tile (a double, the clearest "kicker") on
+      // a play that didn't need it -- a mild counterweight to the "shed
+      // doubles early" bonus above, so an equally good non-scoring play
+      // with a less valuable tile is preferred when one is available.
+      if (isDouble(tile)) value -= 5;
+    }
+  }
+
+  return value;
+}
+
+// Picks the best-scoring candidate; ties are broken randomly among the
+// top tier so the bot isn't perfectly predictable when several moves are
+// genuinely equivalent. signals, suitAware, and macroLean are optional --
+// see evaluateCandidate above.
+function chooseBotMove(hand, board, legalByTile, rng, signals, suitAware, macroLean) {
+  rng = rng || Math.random;
+  var candidates = [];
+  legalByTile.forEach(function (placements, tileIndex) {
+    placements.forEach(function (placement) {
+      var value = evaluateCandidate(hand, tileIndex, placement, board, signals, suitAware, macroLean);
+      candidates.push({ tileIndex: tileIndex, placement: placement, value: value });
+    });
+  });
+  if (candidates.length === 0) return null;
+  candidates.sort(function (a, b) { return b.value - a.value; });
+  var top = candidates[0].value;
+  var bestTier = candidates.filter(function (c) { return c.value === top; });
+  return bestTier[Math.floor(rng() * bestTier.length)];
+}
+
+
+// Interactive controller — browser version, logic identical to the
+// Node-validated interactive-controller.js (see dominoes-app/test-interactive-controller.js
+// for the automated validation this was ported from).
+
+var WINNING_SCORE = 61;
+
+function runInitialPullFiveUpSeated(rng) {
+  rng = rng || Math.random;
+  var pullSet = shuffle(createFullSet(), rng);
+  var pulls = pullSet.slice(0, 4);
+  var bestIndex = 0;
+  for (var i = 1; i < 4; i++) {
+    if (comparePulls(pulls[i], pulls[bestIndex]) > 0) bestIndex = i;
+  }
+  var order = pulls
+    .map(function (tile, idx) { return { idx: idx, tile: tile }; })
+    .sort(function (a, b) { return comparePulls(b.tile, a.tile); });
+  var teamOfOrig = [null, null, null, null];
+  teamOfOrig[order[0].idx] = 'A';
+  teamOfOrig[order[1].idx] = 'A';
+  teamOfOrig[order[2].idx] = 'B';
+  teamOfOrig[order[3].idx] = 'B';
+
+  var humanOrig = 0;
+  var humanTeam = teamOfOrig[humanOrig];
+  var partnerOrig = teamOfOrig.findIndex(function (t, i) { return i !== humanOrig && t === humanTeam; });
+  var opponentOrigs = [0, 1, 2, 3].filter(function (i) { return i !== humanOrig && i !== partnerOrig; });
+
+  var origToSeat = {};
+  origToSeat[humanOrig] = 0;
+  origToSeat[partnerOrig] = 2;
+  origToSeat[opponentOrigs[0]] = 1;
+  origToSeat[opponentOrigs[1]] = 3;
+
+  var teamOfSeat = [null, null, null, null];
+  for (var k = 0; k < 4; k++) teamOfSeat[origToSeat[k]] = teamOfOrig[k];
+  var setterSeat = origToSeat[bestIndex];
+
+  return { teamOfSeat: teamOfSeat, setterSeat: setterSeat };
+}
+
+function dealFiveUp(rng) {
+  rng = rng || Math.random;
+  var deck = shuffle(createFullSet(), rng);
+  var hands = [deck.slice(0, 5), deck.slice(5, 10), deck.slice(10, 15), deck.slice(15, 20)];
+  var boneyard = deck.slice(20);
+  return { hands: hands, boneyard: boneyard };
+}
+
+function sumPips(hand) {
+  return hand.reduce(function (sum, t) { return sum + pipSum(t); }, 0);
+}
+
+function opponentsOfSeat(seat, teamOfSeat) {
+  return [0, 1, 2, 3].filter(function (i) { return i !== seat && teamOfSeat[i] !== teamOfSeat[seat]; });
+}
+
+function partnerOfSeat(seat, teamOfSeat) {
+  return [0, 1, 2, 3].filter(function (i) { return i !== seat && teamOfSeat[i] === teamOfSeat[seat]; })[0];
+}
+
+function sideKeyForSeat(teamOfSeat, seat) {
+  return teamOfSeat[seat];
+}
+
+function createInteractiveGame(rng) {
+  rng = rng || Math.random;
+  var pull = runInitialPullFiveUpSeated(rng);
+  return {
+    rng: rng,
+    teamOf: pull.teamOfSeat,
+    setterIndex: pull.setterSeat,
+    scoreTracks: { A: createTrack(), B: createTrack() },
+    finished: false,
+    winner: null,
+    handNumber: 0,
+    partnerDifficulty: 'advanced', // seat 2 -- 'beginner' | 'intermediate' | 'advanced' | 'expert', see ai.js
+    opponentDifficulty: 'advanced', // seats 1 & 3
+    wagerBase: 1, // dollars for winning the game
+    wagerPerPoint: 0.10, // dollars per point of final score differential
+  };
+}
+
+function startHand(game) {
+  game.handNumber += 1;
+  var dealt = dealFiveUp(game.rng);
+  return {
+    hands: dealt.hands,
+    boneyard: dealt.boneyard,
+    board: createEmptyBoard(),
+    turn: game.setterIndex,
+    setterSeat: game.setterIndex, // fixed for this hand; game.setterIndex advances early at hand-end
+    consecutivePasses: 0,
+    playOrder: [],
+    over: false,
+    result: null,
+    lastSignal: [null, null, null, null], // Stage 2: last shown number per seat, from a genuine (non-forced) choice
+  };
+}
+
+function prepareTurn(hand, board, boneyard, variant) {
+  var legalByTile = hand.map(function (tile) { return getLegalPlacements(tile, board); });
+  var anyLegal = legalByTile.some(function (p) { return p.length > 0; });
+  var drewInfo = { drawnTiles: [], mustPass: false };
+
+  if (!anyLegal && !isEmpty(board)) {
+    drewInfo = drawUntilPlayableOrFloor(boneyard, hand, board, variant);
+    legalByTile = hand.map(function (tile) { return getLegalPlacements(tile, board); });
+    anyLegal = legalByTile.some(function (p) { return p.length > 0; });
+  }
+
+  return { legalByTile: legalByTile, canMove: anyLegal, drewInfo: drewInfo };
+}
+
+function applyMove(game, handState, seat, tileIndex, placement) {
+  var hand = handState.hands[seat];
+  var tile = hand[tileIndex];
+  var res = playTile(handState.board, tile, placement);
+  hand.splice(tileIndex, 1);
+  handState.playOrder.push({ seat: seat, tile: tile, scoreThisPlay: res.scoreThisPlay });
+  if (res.scoreThisPlay > 0) {
+    addScore(game.scoreTracks[sideKeyForSeat(game.teamOf, seat)], res.scoreThisPlay);
+  }
+  handState.consecutivePasses = 0;
+  var wentOut = hand.length === 0;
+  return { scoreThisPlay: res.scoreThisPlay, wentOut: wentOut };
+}
+
+function applyPass(game, handState) {
+  handState.consecutivePasses += 1;
+  return handState.consecutivePasses >= 4;
+}
+
+function resolveDominoOut(game, handState, wentOutSeat, finalPlayScore) {
+  var opponents = opponentsOfSeat(wentOutSeat, game.teamOf);
+  var opponentPipTotal = opponents.reduce(function (sum, i) { return sum + sumPips(handState.hands[i]); }, 0);
+  var bonus = roundToNearest5(opponentPipTotal) / 5;
+  var totalAward = finalPlayScore + bonus;
+  if (totalAward > 0) {
+    addScore(game.scoreTracks[sideKeyForSeat(game.teamOf, wentOutSeat)], totalAward);
+  }
+  return { type: 'domino-out', wentOutSeat: wentOutSeat, finalPlayScore: finalPlayScore, opponentPipTotal: opponentPipTotal, bonus: bonus, totalAward: totalAward };
+}
+
+// Wager: a flat base amount for winning the game, plus a per-point rate
+// times the final score differential. Purely a result-presentation
+// number -- has no effect on gameplay or AI decisions.
+function computeWagerResult(winnerScore, loserScore, base, perPoint) {
+  base = base === undefined ? 1 : base;
+  perPoint = perPoint === undefined ? 0.10 : perPoint;
+  var diff = Math.max(0, winnerScore - loserScore);
+  var amount = base + diff * perPoint;
+  return Math.round(amount * 100) / 100; // avoid floating-point cent artifacts
+}
+
+function resolveBlocked(game, handState) {
+  var teamPips = { A: 0, B: 0 };
+  for (var i = 0; i < 4; i++) {
+    teamPips[game.teamOf[i]] += sumPips(handState.hands[i]);
+  }
+  var winningTeam = teamPips.A <= teamPips.B ? 'A' : 'B';
+  var losingTeam = winningTeam === 'A' ? 'B' : 'A';
+  var opponentPipTotal = teamPips[losingTeam];
+  var bonus = roundToNearest5(opponentPipTotal) / 5;
+  if (bonus > 0) {
+    addScore(game.scoreTracks[winningTeam], bonus);
+  }
+  return { type: 'blocked', winningTeam: winningTeam, opponentPipTotal: opponentPipTotal, bonus: bonus };
+}
+
+function finishHandAndCheckGameOver(game) {
+  var sides = Object.keys(game.scoreTracks);
+  var anyComplete = sides.some(function (s) { return hasCompletedCircuit(game.scoreTracks[s], WINNING_SCORE); });
+  if (anyComplete) {
+    game.finished = true;
+    var best = sides[0];
+    sides.forEach(function (s) {
+      if (currentScore(game.scoreTracks[s]) > currentScore(game.scoreTracks[best])) best = s;
+    });
+    game.winner = best;
+  } else {
+    // Clockwise means South(you)->West(left opp)->North(partner)->East(right
+    // opp)->South, i.e. "rotates to the player on your left" -- decrementing
+    // the seat index, not incrementing it.
+    game.setterIndex = (game.setterIndex + 3) % 4;
+  }
+}
+
+
+// UI layer: renders game state into the felt-table DOM built in app_body,
+// and wires up tile taps / buttons to the interactive controller above.
+
+var PIP_LAYOUT = {
+  0: [],
+  1: [[50, 50]],
+  2: [[20, 20], [80, 80]],
+  3: [[20, 20], [50, 50], [80, 80]],
+  4: [[20, 20], [80, 20], [20, 80], [80, 80]],
+  5: [[20, 20], [80, 20], [50, 50], [20, 80], [80, 80]],
+};
+// A six's "3 dots in a row" always runs along the TILE's own long axis --
+// confirmed against physical dominoes: the pattern is printed on the tile
+// itself, so when the tile is rotated, the dots rotate with it. A tile
+// standing tall (domino-v) shows 2 columns of 3 (the 3s running
+// vertically, matching its own vertical long axis); a tile lying wide
+// (domino-h) shows 3 columns of 2 (the 3s running horizontally, matching
+// its own horizontal long axis) -- the same physical pattern, rotated
+// exactly as the tile itself is rotated.
+var PIP_LAYOUT_6_TALL = [[20, 15], [20, 50], [20, 85], [80, 15], [80, 50], [80, 85]];
+var PIP_LAYOUT_6_WIDE = [[15, 20], [50, 20], [85, 20], [15, 80], [50, 80], [85, 80]];
+
+function pipsHtml(n, orientation) {
+  var positions;
+  if (n === 6) {
+    positions = orientation === 'v' ? PIP_LAYOUT_6_TALL : PIP_LAYOUT_6_WIDE;
+  } else {
+    positions = PIP_LAYOUT[n];
+  }
+  return positions.map(function (pos) {
+    return '<div class="pip" style="left:' + pos[0] + '%;top:' + pos[1] + '%;"></div>';
+  }).join('');
+}
+
+function tileHtml(tile, orientation, extraClass) {
+  return tileHtmlOrdered(tile.a, tile.b, orientation, extraClass);
+}
+
+function tileHtmlOrdered(v1, v2, orientation, extraClass, styleAttr) {
+  var dirClass = orientation === 'v' ? 'domino-v' : 'domino-h';
+  return (
+    '<div class="domino ' + dirClass + (extraClass ? ' ' + extraClass : '') + '"' +
+    (styleAttr ? ' style="' + styleAttr + '"' : '') + '>' +
+    '<div class="half"><div class="pips">' + pipsHtml(v1, orientation) + '</div></div>' +
+    '<div class="half"><div class="pips">' + pipsHtml(v2, orientation) + '</div></div>' +
+    '</div>'
+  );
+}
+
+// ---- Board geometry ----
+// Real dominoes rotate a spinner double 90 degrees relative to the line
+// that reaches it: the line continues straight through the double via its
+// long SIDES (the "end" slot the house rule requires be played first),
+// while the double's own natural top/bottom ends become the perpendicular
+// branch ("side") connections once unlocked. This walks the engine's
+// existing slot data and assigns each played tile an axis ('h'/'v') and a
+// grid position reflecting that convention — purely for rendering; game
+// legality already lives entirely in board.js and is untouched by this.
+function axisOf(dir) { return (dir === 'left' || dir === 'right') ? 'h' : 'v'; }
+function directionDelta(dir) {
+  if (dir === 'left') return { dx: -1, dy: 0 };
+  if (dir === 'right') return { dx: 1, dy: 0 };
+  if (dir === 'up') return { dx: 0, dy: -1 };
+  if (dir === 'down') return { dx: 0, dy: 0 + 1 };
+  return { dx: 0, dy: 0 };
+}
+function perpendicularPair(dir) {
+  return axisOf(dir) === 'h' ? { sideA: 'up', sideB: 'down' } : { sideA: 'left', sideB: 'right' };
+}
+
+// The visible gap between tile EDGES is what should look uniform, not the
+// distance between tile CENTERS -- those are different things once tiles
+// have different footprints depending on orientation (64x36 vs 36x64). So
+// the step between two tiles is each tile's own half-footprint in the
+// direction of travel, plus a small constant edge gap.
+var TILE_LONG = 64;
+var TILE_SHORT = 36;
+var EDGE_GAP = 6;
+
+function footprintInDirection(axis, dir) {
+  var alongH = (dir === 'left' || dir === 'right');
+  if (axis === 'h') return alongH ? TILE_LONG : TILE_SHORT;
+  return alongH ? TILE_SHORT : TILE_LONG;
+}
+
+function computeLayout(board) {
+  var layout = {};
+  var root = board.nodes[board.rootId];
+  var rootAxis = root.isDouble ? 'v' : 'h';
+  layout[root.id] = { axis: rootAxis, gridX: 0, gridY: 0, growDir: null };
+
+  function visit(node) {
+    var nodeLayout = layout[node.id];
+    var childDirs = {};
+
+    if (node.id === root.id) {
+      if (node.isDouble) {
+        childDirs.end1 = 'left'; childDirs.end2 = 'right';
+        childDirs.sideA = 'up'; childDirs.sideB = 'down';
+      } else {
+        childDirs.end1 = 'left'; childDirs.end2 = 'right';
+      }
+    } else {
+      var growDir = nodeLayout.growDir;
+      if (node.isDouble) {
+        childDirs.freeEnd = growDir;
+        var pp = perpendicularPair(growDir);
+        childDirs.sideA = pp.sideA; childDirs.sideB = pp.sideB;
+      } else {
+        childDirs.openEnd = growDir;
+      }
+    }
+
+    node.slots.forEach(function (slot) {
+      if (slot.filledBy === null) return;
+      var dir = childDirs[slot.key];
+      if (!dir) return;
+      var child = board.nodes[slot.filledBy];
+      var delta = directionDelta(dir);
+      var childAxis = child.isDouble
+        ? (axisOf(dir) === 'h' ? 'v' : 'h')
+        : axisOf(dir);
+      var parentFootprint = footprintInDirection(nodeLayout.axis, dir);
+      var childFootprint = footprintInDirection(childAxis, dir);
+      var step = parentFootprint / 2 + childFootprint / 2 + EDGE_GAP;
+      layout[child.id] = {
+        axis: childAxis,
+        gridX: nodeLayout.gridX + delta.dx * step,
+        gridY: nodeLayout.gridY + delta.dy * step,
+        growDir: dir,
+      };
+      visit(child);
+    });
+  }
+
+  visit(root);
+  return layout;
+}
+
+// Determines which pip value renders in the "first" (left/top) vs
+// "second" (right/bottom) half of a placed tile so the value connecting
+// toward its parent always faces the parent, and doubles (symmetric
+// anyway) render unchanged.
+function valuesForRender(node, layout, rootId) {
+  if (node.isDouble) {
+    return { first: node.tile.a, second: node.tile.b };
+  }
+  if (node.id === rootId) {
+    return { first: node.tile.a, second: node.tile.b };
+  }
+  var openSlot = node.slots[0]; // the lone 'openEnd' slot on an attached non-double
+  var forwardValue = openSlot.value;
+  var backValue = (node.tile.a === forwardValue) ? node.tile.b : node.tile.a;
+  var dir = layout[node.id].growDir;
+  var backIsFirst = (dir === 'right' || dir === 'down');
+  return backIsFirst
+    ? { first: backValue, second: forwardValue }
+    : { first: forwardValue, second: backValue };
+}
+
+function backTileHtml(w, h, style) {
+  return '<div class="opp-back" style="width:' + w + 'px;height:' + h + 'px;' + (style || '') + '"></div>';
+}
+
+// ---- App state ----
+var game = null;
+var handState = null;
+var uiLocked = false; // true while a bot move / pause is in flight, or an overlay is showing
+var pendingTileIndex = null; // set while the human is choosing among multiple legal spots
+var PAUSE_MS = 1800; // pause between each domino being played, so it reads like real play
+var OPENING_PAUSE_MS = PAUSE_MS * 2; // extra time to take in the board right after the set opens
+
+var SEAT_TEAM_LABEL = { 0: 'us', 2: 'us', 1: 'them', 3: 'them' };
+
+function describeMove(seat, scoreThisPlay) {
+  var who = seat === 0 ? 'You' : (seat === 2 ? 'Partner' : 'Opponent');
+  if (scoreThisPlay > 0) return who + ' scored ' + scoreThisPlay + '!';
+  return who + ' played a tile.';
+}
+
+// Reuses the exact same direction rules computeLayout() uses internally,
+// so a chooser button's label always matches where the tile will actually
+// render if picked.
+function directionForSlot(board, layout, nodeId, slotKey) {
+  var node = board.nodes[nodeId];
+  if (nodeId === board.rootId) {
+    if (node.isDouble) {
+      if (slotKey === 'end1') return 'left';
+      if (slotKey === 'end2') return 'right';
+      if (slotKey === 'sideA') return 'up';
+      if (slotKey === 'sideB') return 'down';
+    } else {
+      if (slotKey === 'end1') return 'left';
+      if (slotKey === 'end2') return 'right';
+    }
+    return null;
+  }
+  var l = layout[nodeId];
+  var growDir = l ? l.growDir : null;
+  if (node.isDouble) {
+    if (slotKey === 'freeEnd') return growDir;
+    var pp = perpendicularPair(growDir);
+    if (slotKey === 'sideA') return pp.sideA;
+    if (slotKey === 'sideB') return pp.sideB;
+  } else if (slotKey === 'openEnd') {
+    return growDir;
+  }
+  return null;
+}
+
+function directionLabel(dir) {
+  if (dir === 'left') return 'left';
+  if (dir === 'right') return 'right';
+  if (dir === 'up') return 'top';
+  if (dir === 'down') return 'bottom';
+  return 'here';
+}
+
+// A double's "side" slots are the ones that must be played first (the
+// connections along its longer rendered dimension); "end" slots are
+// locked until a side is played. Labeling by slot key -- not by screen
+// direction -- is what actually communicates this rule to the player.
+function slotTypeLabel(slotKey) {
+  if (slotKey === 'sideA' || slotKey === 'sideB') return 'side';
+  return 'end';
+}
+
+function $(id) { return document.getElementById(id); }
+
+function setStatus(text, isScore) {
+  var el = $('status-bar');
+  el.textContent = text;
+  el.style.color = isScore ? '#f2c94c' : '';
+  el.style.fontWeight = isScore ? '700' : '';
+}
+
+var scorePopupHideTimer = null;
+function showScorePopup(text) {
+  var el = $('score-popup');
+  el.textContent = text;
+  el.classList.add('show');
+  if (scorePopupHideTimer) clearTimeout(scorePopupHideTimer);
+  scorePopupHideTimer = setTimeout(function () {
+    el.classList.remove('show');
+  }, 1300);
+}
+
+function renderSeats() {
+  // Partner (seat 2, top), left opponent (seat 3), right opponent (seat 1)
+  var partnerCount = handState.hands[2].length;
+  $('seat-label-2').textContent = 'partner \u00b7 ' + partnerCount + ' left';
+  $('seat-tiles-2').innerHTML = Array(partnerCount).fill(0).map(function () {
+    return backTileHtml(40, 26);
+  }).join('');
+
+  var leftCount = handState.hands[3].length;
+  $('seat-label-3').textContent = 'opponent';
+  $('seat-tiles-3').innerHTML = Array(leftCount).fill(0).map(function () {
+    return backTileHtml(26, 40);
+  }).join('');
+
+  var rightCount = handState.hands[1].length;
+  $('seat-label-1').textContent = 'opponent';
+  $('seat-tiles-1').innerHTML = Array(rightCount).fill(0).map(function () {
+    return backTileHtml(26, 40);
+  }).join('');
+
+  [0, 1, 2, 3].forEach(function (seat) {
+    var el = seat === 0 ? null : $('seat-label-' + seat);
+    if (el) el.classList.toggle('active-seat', handState.turn === seat && !handState.over);
+  });
+
+  // "on set" indicator on whichever seat currently holds set for this hand
+  var setterSeat = game.setterIndex;
+  [1, 2, 3].forEach(function (seat) {
+    var el = $('seat-label-' + seat);
+    var base = seat === 2 ? 'partner \u00b7 ' + handState.hands[2].length + ' left' : 'opponent';
+    el.textContent = base + (setterSeat === seat ? ' \u00b7 on set' : '');
+  });
+}
+
+// The boneyard sits near whoever currently holds set (Rules Spec, Section
+// 9), rendered as one of four corner positions keyed directly to the
+// setter's own seat.
+function positionBoneyard() {
+  var el = $('boneyard');
+  var seat = handState.setterSeat;
+  // Explicitly set every side to either a value or 'auto' -- clearing to
+  // an empty string only removes the inline override and lets the base
+  // .boneyard CSS class's own top/right values show back through, which
+  // silently wins over an inline bottom/left in the over-constrained case.
+  if (seat === 0) { el.style.top = 'auto'; el.style.left = 'auto'; el.style.right = '10px'; el.style.bottom = '90px'; }    // near your own hand
+  else if (seat === 1) { el.style.bottom = 'auto'; el.style.left = 'auto'; el.style.top = '75px'; el.style.right = '60px'; }  // near the right opponent
+  else if (seat === 2) { el.style.bottom = 'auto'; el.style.right = 'auto'; el.style.top = '75px'; el.style.left = '60px'; }   // near your partner
+  else { el.style.top = 'auto'; el.style.right = 'auto'; el.style.left = '10px'; el.style.bottom = '90px'; }               // near the left opponent
+}
+
+function renderBoneyard() {
+  var count = handState.boneyard.length;
+  $('bone-count').textContent = String(count);
+  var pileEl = $('boneyard');
+  var existing = pileEl.querySelectorAll('.opp-back');
+  for (var e = 0; e < existing.length; e++) { existing[e].parentNode.removeChild(existing[e]); }
+  var shown = Math.min(count, 4);
+  var offsets = [
+    { top: 8, left: 2, rot: -11 },
+    { top: 2, left: 10, rot: 7 },
+    { top: 10, left: 17, rot: -4 },
+    { top: 4, left: 24, rot: 12 },
+  ];
+  for (var i = 0; i < shown; i++) {
+    var o = offsets[i];
+    var div = document.createElement('div');
+    div.className = 'opp-back';
+    div.style.position = 'absolute';
+    div.style.width = '20px';
+    div.style.height = '30px';
+    div.style.top = o.top + 'px';
+    div.style.left = o.left + 'px';
+    div.style.transform = 'rotate(' + o.rot + 'deg)';
+    pileEl.appendChild(div);
+  }
+}
+
+function renderPlayArea() {
+  var container = $('play-area');
+  if (isEmpty(handState.board)) {
+    container.innerHTML = '';
+    return;
+  }
+
+  var board = handState.board;
+  var layout = computeLayout(board);
+  var ids = Object.keys(board.nodes);
+  var minX = 0, maxX = 0, minY = 0, maxY = 0;
+  ids.forEach(function (id) {
+    var l = layout[id];
+    if (!l) return;
+    if (l.gridX < minX) minX = l.gridX;
+    if (l.gridX > maxX) maxX = l.gridX;
+    if (l.gridY < minY) minY = l.gridY;
+    if (l.gridY > maxY) maxY = l.gridY;
+  });
+
+  var PAD = 40; // headroom so tiles at the bounding-box edge aren't clipped
+  var naturalW = (maxX - minX) + PAD * 2;
+  var naturalH = (maxY - minY) + PAD * 2;
+  var containerW = container.clientWidth || 290;
+  var containerH = container.clientHeight || 370;
+
+  // Auto-fit: only shrink (never enlarge past natural/100% size) so a
+  // short board isn't blown up. But shrinking is capped at MIN_SCALE --
+  // below that, gaps between tiles (and the tiles themselves) become too
+  // small to read clearly. A board longer than that scrolls within the
+  // play-area instead of continuing to shrink into illegibility.
+  var MIN_SCALE = 0.55;
+  var rawScale = Math.min(1, containerW / naturalW, containerH / naturalH);
+  var scale = Math.max(MIN_SCALE, rawScale);
+
+  var tilesHtml = ids.map(function (id) {
+    var node = board.nodes[id];
+    var l = layout[id];
+    if (!l) return '';
+    var vals = valuesForRender(node, layout, board.rootId);
+    var tileW = l.axis === 'h' ? 64 : 36;
+    var tileH = l.axis === 'h' ? 36 : 64;
+    var left = (l.gridX - minX) + PAD - tileW / 2;
+    var top = (l.gridY - minY) + PAD - tileH / 2;
+    var styleAttr = 'position:absolute;left:' + left + 'px;top:' + top + 'px;';
+    return tileHtmlOrdered(vals.first, vals.second, l.axis, 'placed', styleAttr);
+  }).join('');
+
+  var needsScroll = rawScale < MIN_SCALE;
+  var wrapperLeft = needsScroll ? 0 : (containerW - naturalW) / 2;
+  var wrapperTop = needsScroll ? 0 : (containerH - naturalH) / 2;
+  var wrapperStyle =
+    'left:' + wrapperLeft + 'px;top:' + wrapperTop + 'px;' +
+    'width:' + naturalW + 'px;height:' + naturalH + 'px;' +
+    'transform:scale(' + scale + ');transform-origin:center center;';
+
+  container.innerHTML = '<div class="board-inner" style="' + wrapperStyle + '">' + tilesHtml + '</div>';
+}
+
+// As the played chain grows, progressively shrink the racks holding
+// still-unplayed tiles (your hand, and the face-down opponent/partner
+// racks) so the play area gets more room to work with. Shrinks from 1.0
+// down to a 0.6 floor as tile count on the board increases, and expands
+// the play-area's margins to reclaim the freed space.
+var HAND_BASE_MARGINS = { top: 184, left: 46, right: 46, bottom: 130 };
+function computeHandScale(board) {
+  var count = isEmpty(board) ? 0 : Object.keys(board.nodes).length;
+  return Math.max(0.6, 1 - count * 0.025);
+}
+function applyDynamicScaling() {
+  var handScale = computeHandScale(handState.board);
+  var shrink = 1 - handScale; // 0 (no shrink) to 0.4 (max shrink)
+
+  [$('hand'), $('seat-tiles-2'), $('seat-tiles-1'), $('seat-tiles-3')].forEach(function (el) {
+    el.style.transform = 'scale(' + handScale + ')';
+  });
+
+  var playArea = $('play-area');
+  playArea.style.top = (HAND_BASE_MARGINS.top - shrink * 60) + 'px';
+  playArea.style.left = (HAND_BASE_MARGINS.left - shrink * 20) + 'px';
+  playArea.style.right = (HAND_BASE_MARGINS.right - shrink * 20) + 'px';
+  playArea.style.bottom = (HAND_BASE_MARGINS.bottom - shrink * 15) + 'px';
+}
+function renderScoreboard() {
+  var usKey = game.teamOf[0];
+  var themKey = usKey === 'A' ? 'B' : 'A';
+  var usScore = currentScore(game.scoreTracks[usKey]);
+  var themScore = currentScore(game.scoreTracks[themKey]);
+  $('scoreboard-simple').textContent = 'Us ' + usScore + ' \u00b7 Them ' + themScore;
+}
+
+function renderHand() {
+  var hand = handState.hands[0];
+  $('hand').innerHTML = hand.map(function (tile, idx) {
+    var cls = idx === pendingTileIndex ? 'selected' : '';
+    return tileHtml(tile, 'v', cls).replace(
+      '<div class="domino',
+      '<div data-tile-index="' + idx + '" class="domino'
+    );
+  }).join('');
+
+  Array.prototype.forEach.call($('hand').querySelectorAll('.domino'), function (el) {
+    el.addEventListener('click', onHandTileClick);
+  });
+}
+
+// Peek at legality WITHOUT triggering a boneyard draw (draws only happen
+// through the explicit turn-processing flow, not just by rendering).
+function prepareTurnPeek(hand, board) {
+  var legalByTile = hand.map(function (tile) { return getLegalPlacements(tile, board); });
+  return { legalByTile: legalByTile };
+}
+
+function renderActionRow() {
+  var row = $('action-row');
+  row.innerHTML = '';
+  if (handState.over || game.finished) return;
+  if (handState.turn !== 0) return;
+  if (pendingTileIndex !== null) return; // chooser is occupying this slot
+
+  var btn = document.createElement('button');
+  btn.className = 'game-btn';
+  btn.textContent = "Draw / I can't play";
+  btn.onclick = handleHumanDrawOrPass;
+  row.appendChild(btn);
+}
+
+function renderAll() {
+  applyDynamicScaling();
+  renderSeats();
+  positionBoneyard();
+  renderBoneyard();
+  renderPlayArea();
+  renderScoreboard();
+  renderHand();
+  renderActionRow();
+}
+
+// ---- Event handlers ----
+function onHandTileClick(e) {
+  if (uiLocked || handState.turn !== 0 || handState.over) return;
+  var idx = parseInt(e.currentTarget.getAttribute('data-tile-index'), 10);
+
+  if (pendingTileIndex !== null) {
+    if (idx === pendingTileIndex) {
+      pendingTileIndex = null;
+      renderAll();
+    }
+    return;
+  }
+
+  var hand = handState.hands[0];
+  var tile = hand[idx];
+  var placements = getLegalPlacements(tile, handState.board);
+  if (placements.length === 0) {
+    setStatus("That domino doesn't fit anywhere on the board right now.");
+    var tileEl = e.currentTarget;
+    tileEl.classList.add('shake');
+    setTimeout(function () { tileEl.classList.remove('shake'); }, 400);
+    return;
+  }
+
+  if (placements.length === 1) {
+    humanPlay(idx, placements[0]);
+    return;
+  }
+
+  pendingTileIndex = idx;
+  renderHand();
+  showPlacementChooser(idx, placements);
+}
+
+function showPlacementChooser(idx, placements) {
+  var layout = isEmpty(handState.board) ? {} : computeLayout(handState.board);
+  var row = $('action-row');
+  // Show the specific value whenever there are 3+ options, OR whenever two
+  // or more options would share the same type word (e.g. "side" and
+  // "side", distinguished only by top/bottom) -- that similarity is
+  // exactly the case where the value is the clearest differentiator, even
+  // with just two options on the screen.
+  var typeCounts = {};
+  placements.forEach(function (p) {
+    if (p.opening) return;
+    var t = slotTypeLabel(p.slotKey);
+    typeCounts[t] = (typeCounts[t] || 0) + 1;
+  });
+  var hasSimilarPair = Object.keys(typeCounts).some(function (t) { return typeCounts[t] >= 2; });
+  var needsValueCallout = placements.length >= 3 || hasSimilarPair;
+
+  // Precompute each placement's direction, then order the BUTTONS to match
+  // actual screen layout (left before right, etc.) so "play on the left"
+  // visually appears on the left of the row -- while data-choice-index
+  // still points back at the original placements array so clicking works
+  // regardless of display order.
+  var dirPriority = { left: 0, up: 1, right: 2, down: 3 };
+  var order = placements.map(function (p, i) {
+    var dir = p.opening ? null : directionForSlot(handState.board, layout, p.nodeId, p.slotKey);
+    return { originalIndex: i, dir: dir };
+  });
+  order.sort(function (a, b) {
+    var pa = a.dir && dirPriority[a.dir] !== undefined ? dirPriority[a.dir] : 99;
+    var pb = b.dir && dirPriority[b.dir] !== undefined ? dirPriority[b.dir] : 99;
+    return pa - pb;
+  });
+
+  var html = order.map(function (entry) {
+    var p = placements[entry.originalIndex];
+    var label;
+    if (p.opening) {
+      label = 'Open with this tile';
+    } else {
+      var dir = entry.dir;
+      var type = slotTypeLabel(p.slotKey);
+      label = 'Play on ' + type + (dir ? ' (' + directionLabel(dir) + ')' : '');
+      if (needsValueCallout) label += ' \u2014 on the ' + p.value;
+    }
+    return '<button class="game-btn choice-btn" data-choice-index="' + entry.originalIndex + '">' + label + '</button>';
+  }).join('') + '<button class="game-btn cancel-btn">Cancel</button>';
+  row.innerHTML = html;
+
+  var choiceBtns = row.querySelectorAll('.choice-btn');
+  for (var i = 0; i < choiceBtns.length; i++) {
+    (function (btn) {
+      btn.addEventListener('click', function () {
+        var choiceIdx = parseInt(btn.getAttribute('data-choice-index'), 10);
+        pendingTileIndex = null;
+        humanPlay(idx, placements[choiceIdx]);
+      });
+    })(choiceBtns[i]);
+  }
+  var cancelBtn = row.querySelector('.cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', function () {
+      pendingTileIndex = null;
+      renderAll();
+    });
+  }
+}
+
+// Stage 2 signaling: works out what a just-completed play reveals, so it
+// can be recorded in handState.lastSignal for partners/opponents to read
+// on their next turn. A forced play (no real choice existed) reveals
+// nothing intentional. An opening play's signal is whichever of its two
+// values the player holds more of in the rest of their hand. An ordinary
+// attached play's signal is the value left exposed (not the one matched
+// to the board). Doubles don't produce a single clear signal value here.
+function computeSignalValue(remainingHand, tile, placement, wasForced) {
+  if (wasForced) return null;
+  if (placement.opening) {
+    if (tile.a === tile.b) return tile.a;
+    var strengthA = suitStrength(remainingHand, tile.a);
+    var strengthB = suitStrength(remainingHand, tile.b);
+    return strengthA >= strengthB ? tile.a : tile.b;
+  }
+  if (tile.a === tile.b) return null;
+  return tile.a === placement.value ? tile.b : tile.a;
+}
+
+// Builds the { partner, opponents } signal context a bot uses to read its
+// teammate and rivals, per Section 4's default partnership system.
+function signalsForSeat(seat) {
+  var partnerSeat = partnerOfSeat(seat, game.teamOf);
+  var oppSeats = opponentsOfSeat(seat, game.teamOf);
+  return {
+    partner: partnerSeat !== undefined ? handState.lastSignal[partnerSeat] : null,
+    opponents: oppSeats.map(function (s) { return handState.lastSignal[s]; }),
+  };
+}
+
+function humanPlay(idx, placement) {
+  var wasOpeningPlay = isEmpty(handState.board);
+  var hand = handState.hands[0];
+  var tile = hand[idx];
+  var totalLegal = hand.reduce(function (sum, t) { return sum + getLegalPlacements(t, handState.board).length; }, 0);
+  var wasForced = totalLegal === 1;
+  var res = applyMove(game, handState, 0, idx, placement);
+  handState.lastSignal[0] = computeSignalValue(hand, tile, placement, wasForced);
+  renderAll();
+  setStatus(describeMove(0, res.scoreThisPlay), res.scoreThisPlay > 0);
+  if (res.scoreThisPlay > 0) showScorePopup('You +' + res.scoreThisPlay + '!');
+  uiLocked = true;
+  setTimeout(function () {
+    uiLocked = false;
+    if (res.wentOut) {
+      endHand(resolveDominoOut(game, handState, 0, res.scoreThisPlay));
+    } else {
+      proceedToNextTurn();
+    }
+  }, wasOpeningPlay ? OPENING_PAUSE_MS : PAUSE_MS);
+}
+
+function handleHumanDrawOrPass() {
+  var hand = handState.hands[0];
+  var board = handState.board;
+  var boneyard = handState.boneyard;
+
+  var legalByTile = hand.map(function (tile) { return getLegalPlacements(tile, board); });
+  var anyLegal = legalByTile.some(function (p) { return p.length > 0; });
+  if (anyLegal) {
+    setStatus('You do have a legal play in your hand \u2014 keep looking before drawing.');
+    return;
+  }
+
+  if (boneyard.length > 0) {
+    var info = drawUntilPlayableOrFloor(boneyard, hand, board, 'five-up');
+    var legalByTileAfter = hand.map(function (tile) { return getLegalPlacements(tile, board); });
+    var anyLegalAfter = legalByTileAfter.some(function (p) { return p.length > 0; });
+    if (anyLegalAfter) {
+      renderAll();
+      setStatus(info.drawnTiles.length > 0
+        ? 'You drew ' + info.drawnTiles.length + ' tile(s) \u2014 you can play now.'
+        : 'You can play now.');
+      return;
+    }
+  }
+  var blocked = applyPass(game, handState);
+  renderAll();
+  setStatus('You pass.');
+  uiLocked = true;
+  setTimeout(function () {
+    uiLocked = false;
+    if (blocked) {
+      endHand(resolveBlocked(game, handState));
+    } else {
+      proceedToNextTurn();
+    }
+  }, PAUSE_MS);
+}
+
+function proceedToNextTurn() {
+  pendingTileIndex = null;
+  // Clockwise means South(you)->West(left opp)->North(partner)->East(right
+  // opp)->South -- decrementing the seat index, same direction as set
+  // rotation between hands.
+  handState.turn = (handState.turn + 3) % 4;
+  renderAll();
+  if (handState.turn === 0) {
+    setStatus('Your turn.');
+  } else {
+    runBotTurn();
+  }
+}
+
+function beginTurnFlow() {
+  pendingTileIndex = null;
+  renderAll();
+  if (handState.turn === 0) {
+    setStatus('Your turn.');
+  } else {
+    runBotTurn();
+  }
+}
+
+function runBotTurn() {
+  var seat = handState.turn;
+  var who = seat === 2 ? 'Partner' : 'Opponent';
+  var hand = handState.hands[seat];
+  var prep = prepareTurn(hand, handState.board, handState.boneyard, 'five-up');
+
+  if (!prep.canMove) {
+    var blocked = applyPass(game, handState);
+    renderAll();
+    setStatus(who + ' passes.');
+    uiLocked = true;
+    setTimeout(function () {
+      uiLocked = false;
+      if (blocked) {
+        endHand(resolveBlocked(game, handState));
+      } else {
+        proceedToNextTurn();
+      }
+    }, PAUSE_MS);
+    return;
+  }
+
+  var wasOpeningPlay = isEmpty(handState.board);
+  var wasForced = prep.legalByTile.reduce(function (sum, p) { return sum + p.length; }, 0) === 1;
+  var difficulty = seat === 2 ? (game.partnerDifficulty || 'advanced') : (game.opponentDifficulty || 'advanced');
+  var choice;
+  if (difficulty === 'beginner') {
+    choice = chooseRandomMove(prep.legalByTile, Math.random);
+  } else if (wasOpeningPlay) {
+    choice = (difficulty === 'advanced' || difficulty === 'expert') ? chooseOpeningMove(hand) : chooseRandomMove(prep.legalByTile, Math.random);
+  } else {
+    var signalContext = (difficulty === 'advanced' || difficulty === 'expert') ? signalsForSeat(seat) : null;
+    var macroLean = null;
+    if (difficulty === 'expert') {
+      var myTeamKey = game.teamOf[seat];
+      var oppTeamKey = myTeamKey === 'A' ? 'B' : 'A';
+      macroLean = computeMacroLean(currentScore(game.scoreTracks[myTeamKey]), currentScore(game.scoreTracks[oppTeamKey]), 61);
+    }
+    choice = chooseBotMove(hand, handState.board, prep.legalByTile, Math.random, signalContext, difficulty === 'expert', macroLean);
+  }
+  var tile = hand[choice.tileIndex];
+  var res = applyMove(game, handState, seat, choice.tileIndex, choice.placement);
+  handState.lastSignal[seat] = wasOpeningPlay
+    ? choice.signaledValue
+    : computeSignalValue(hand, tile, choice.placement, wasForced);
+  renderAll();
+  setStatus(describeMove(seat, res.scoreThisPlay), res.scoreThisPlay > 0);
+  if (res.scoreThisPlay > 0) showScorePopup(who + ' +' + res.scoreThisPlay + '!');
+  uiLocked = true;
+  setTimeout(function () {
+    uiLocked = false;
+    if (res.wentOut) {
+      endHand(resolveDominoOut(game, handState, seat, res.scoreThisPlay));
+    } else {
+      proceedToNextTurn();
+    }
+  }, wasOpeningPlay ? OPENING_PAUSE_MS : PAUSE_MS);
+}
+
+function endHand(result) {
+  handState.over = true;
+  handState.result = result;
+  finishHandAndCheckGameOver(game);
+  renderAll();
+
+  var title, body;
+  if (result.type === 'domino-out') {
+    var who = result.wentOutSeat === 0 ? 'You' : result.wentOutSeat === 2 ? 'Your partner' : 'An opponent';
+    title = who + ' went out';
+    body = 'Final play: ' + result.finalPlayScore + ' pts. Opponent pips: ' + result.opponentPipTotal +
+      ' (rounded to ' + result.bonus + '). Total awarded: ' + result.totalAward + '.';
+  } else {
+    var usKeyForBlocked = game.teamOf[0];
+    var weWon = result.winningTeam === usKeyForBlocked;
+    title = 'Blocked \u2014 ' + (weWon ? 'Your team' : 'Their team') + ' had the lowest combined hand';
+    body = 'Opponent pips: ' + result.opponentPipTotal + ', rounded to ' + result.bonus + ' points awarded.';
+  }
+
+  if (game.finished) {
+    var usKey = game.teamOf[0];
+    var youWon = game.winner === usKey;
+    var usScore = currentScore(game.scoreTracks[usKey]);
+    var themScore = currentScore(game.scoreTracks[usKey === 'A' ? 'B' : 'A']);
+    title = youWon ? 'You win!' : 'Opponents win';
+    body += ' Final score: us ' + usScore + ', them ' + themScore + '.';
+    var hasWager = (game.wagerBase || 0) > 0 || (game.wagerPerPoint || 0) > 0;
+    if (hasWager) {
+      var wager = computeWagerResult(youWon ? usScore : themScore, youWon ? themScore : usScore, game.wagerBase, game.wagerPerPoint);
+      body += youWon ? ' You win $' + wager.toFixed(2) + '.' : ' You owe $' + wager.toFixed(2) + '.';
+    }
+  }
+
+  showOverlay(title, body, game.finished ? 'New game' : 'Next hand');
+}
+
+function showOverlay(title, body, btnLabel) {
+  $('overlay-title').textContent = title;
+  $('overlay-body').textContent = body;
+  $('overlay-btn').textContent = btnLabel;
+  $('overlay').classList.remove('hidden');
+}
+
+function hideOverlay() {
+  $('overlay').classList.add('hidden');
+}
+
+$('overlay-btn') && ($('overlay-btn').onclick = function () {
+  hideOverlay();
+  if (game.finished) {
+    startNewGame();
+  } else {
+    handState = startHand(game);
+    beginTurnFlow();
+  }
+});
+
+function startNewGame() {
+  game = createInteractiveGame();
+  applyCurrentSelectorSettings();
+  handState = startHand(game);
+  beginTurnFlow();
+}
+
+// startNewGame() builds a fresh game object with default settings; this
+// re-applies whatever the selectors are currently showing, so a chosen
+// difficulty or wager rate persists across "New game" rather than
+// silently resetting each time.
+function applyCurrentSelectorSettings() {
+  var partnerSel = document.getElementById('partner-difficulty-select');
+  if (partnerSel) game.partnerDifficulty = partnerSel.value;
+  var opponentSel = document.getElementById('opponent-difficulty-select');
+  if (opponentSel) game.opponentDifficulty = opponentSel.value;
+  var wagerSel = document.getElementById('wager-rate-select');
+  if (wagerSel && wagerSel.value) {
+    var parts = wagerSel.value.split(',');
+    game.wagerBase = parseFloat(parts[0]);
+    game.wagerPerPoint = parseFloat(parts[1]);
+  }
+}
+
+var partnerDifficultySelect = document.getElementById('partner-difficulty-select');
+if (partnerDifficultySelect) {
+  partnerDifficultySelect.addEventListener('change', function () {
+    game.partnerDifficulty = partnerDifficultySelect.value; // takes effect on partner's next turn
+  });
+}
+var opponentDifficultySelect = document.getElementById('opponent-difficulty-select');
+if (opponentDifficultySelect) {
+  opponentDifficultySelect.addEventListener('change', function () {
+    game.opponentDifficulty = opponentDifficultySelect.value; // takes effect on opponents' next turn
+  });
+}
+var wagerRateSelect = document.getElementById('wager-rate-select');
+if (wagerRateSelect) {
+  wagerRateSelect.addEventListener('change', function () {
+    var parts = wagerRateSelect.value.split(',');
+    game.wagerBase = parseFloat(parts[0]);
+    game.wagerPerPoint = parseFloat(parts[1]);
+  });
+}
+
+// The table's height is set from its own actual rendered width (not a
+// fixed pixel value) so it scales correctly on any screen size -- a phone
+// or a much larger tablet -- while keeping the same 4:5 proportions.
+// The initial synchronous measurement can occasionally read a stale/
+// incomplete layout width before the browser's first layout pass has
+// fully settled, so a follow-up call shortly after catches and corrects
+// that rather than locking in a wrong height permanently.
+// Fits the table to the actual available screen space -- both width AND
+// height -- so it genuinely fills the screen on any device (phone,
+// tablet, desktop) and orientation, rather than being capped at some
+// fixed maximum that leaves unused space on larger screens like an iPad.
+function updateTableSize() {
+  var table = $('table');
+  var stageLabel = document.querySelector('.stage-label');
+  var difficultyRow = document.querySelector('.difficulty-row');
+  var bodyStyle = window.getComputedStyle(document.body);
+  var bodyPaddingH = parseFloat(bodyStyle.paddingLeft) + parseFloat(bodyStyle.paddingRight);
+  var bodyPaddingV = parseFloat(bodyStyle.paddingTop) + parseFloat(bodyStyle.paddingBottom);
+
+  var availableWidth = window.innerWidth - bodyPaddingH;
+  var usedHeight = bodyPaddingV + 28; // + the table's own bottom margin
+  if (stageLabel) usedHeight += stageLabel.getBoundingClientRect().height + 8;
+  if (difficultyRow) usedHeight += difficultyRow.getBoundingClientRect().height + 12;
+  var availableHeight = window.innerHeight - usedHeight;
+
+  if (availableWidth < 50 || availableHeight < 50) return; // measurement not ready yet; a later call will correct it
+
+  var widthFromHeightLimit = availableHeight / 1.25; // table height = width * 5/4
+  var finalWidth = Math.max(280, Math.min(availableWidth, widthFromHeightLimit, 900));
+  table.style.width = finalWidth + 'px';
+  table.style.height = (finalWidth * 1.25) + 'px';
+}
+window.addEventListener('resize', updateTableSize);
+updateTableSize();
+setTimeout(updateTableSize, 0);
+setTimeout(updateTableSize, 150);
+
+startNewGame();
+
+</script>
+
+</body>
+</html>
